@@ -37,3 +37,6 @@ def denoisy_median_filtering(gray_in, diameter=3):
             denoised_img[h][w] = np.median(window)
             
     return denoised_img
+
+def binarize(gray_in, threshold=128):
+    return np.where(gray_in > threshold, 255, 0)
