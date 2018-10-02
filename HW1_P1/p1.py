@@ -1,4 +1,5 @@
 import numpy as np
+from math import sin, cos, atan, pi
 from scipy.misc import imread
 
 def read_image(im_path):
@@ -122,3 +123,40 @@ def compute_moment(labelled_in):
                 moment_dict[p][7] += (x - x_bar)*(y - y_bar)
                 moment_dict[p][8] += (x - x_bar)**2
     return moment_dict
+
+def compute_attribute(labelled_in):
+    attribute_dict = {}
+    for k, v in compute_moment(labelled_in).items():
+        a = v[8]
+        b = 2 * v[7]
+        c = v[6]
+        theta_1 = atan(b/(a-c))/2
+        theta_2 = theta_1 + pi/2
+        E_1 = a*(sin(theta_1)**2) - b*sin(theta_1)*cos(theta_1) + c*(cos(theta_1)**2)
+        E_2 = a*(sin(theta_2)**2) - b*sin(theta_2)*cos(theta_2) + c*(cos(theta_2)**2)
+        if (a-c)*cos(2*theta_1)+b*sin(2*theta_1)>0:
+            # E_1 min
+            roundedness = E_1/E_2
+        else:
+            # E_2 max or symmetric
+            roundedness = E_2/E_1
+        attribute_dict[k] = [v[0], (v[1]/v[0],v[2]/v[0]), roundedness]
+    return attribute_dict
+
+def recognize_objects(new_img_path, attribute_dict):
+    img = read_image(new_img_path)
+    denoised_img = denoisy_median_filtering(img)
+    binarized_img = binarize(denoised_img, 128)
+    labelled_img = sequential_label(binarized_img)
+    img_attr = compute_attribute(labelled_img)
+    out_objs = []
+    for k_lookup,v_lookup in attribute_dict.items():
+        for k,v in img_attr.items():
+            if v[2] > v_lookup[2]-v_lookup[2]/10 and v[2] < v_lookup[2]+v_lookup[2]/10:
+                out_objs.append(k)
+    result_img = np.zeros((len(img), len(img[0])))
+    for y in range(len(img)):
+        for x in range(len(img[0])):
+            if labelled_img[y][x] in out_objs:
+                result_img[y][x] = 255
+    return result_img
