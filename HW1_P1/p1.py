@@ -140,7 +140,7 @@ def compute_attribute(labelled_in):
         else:
             # E_2 max or symmetric
             roundedness = E_2/E_1
-        attribute_dict[k] = [v[0], (v[1]/v[0],v[2]/v[0]), roundedness]
+        attribute_dict[k] = [v[0], (v[2]/v[0],v[1]/v[0]), roundedness]
     return attribute_dict
 
 def recognize_objects(new_img_path, attribute_dict):
